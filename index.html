@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f7a63">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Revisa Fortal">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Adequação Sanitária Fortal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: cabeçalho com prazo, três painéis de responsável que funcionam como filtro, lista agrupada por área do relatório */
+:root{
+  --bg:#f4f6f5; --surface:#ffffff; --ink:#18221f; --muted:#5d6b66; --line:#dbe2df;
+  --rt:#0f7a63; --rt-soft:#e2f2ed;
+  --mn:#b25d0c; --mn-soft:#f8ecdf;
+  --gs:#3f4fa3; --gs-soft:#e6e9f7;
+  --ok:#1f8a4c; --warn:#c7820a; --risk:#b8322a; --risk-soft:#fbe7e5;
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#111816; --surface:#19221f; --ink:#e7eeeb; --muted:#9aa9a3; --line:#2b3632;
+  --rt:#4cc9a8; --rt-soft:#173a31; --mn:#f0a35a; --mn-soft:#3b2a19; --gs:#9aa8f2; --gs-soft:#252b4a;
+  --ok:#58c98a; --warn:#e9b04a; --risk:#f07a70; --risk-soft:#3d1f1c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111816; --surface:#19221f; --ink:#e7eeeb; --muted:#9aa9a3; --line:#2b3632;
+  --rt:#4cc9a8; --rt-soft:#173a31; --mn:#f0a35a; --mn-soft:#3b2a19; --gs:#9aa8f2; --gs-soft:#252b4a;
+  --ok:#58c98a; --warn:#e9b04a; --risk:#f07a70; --risk-soft:#3d1f1c; color-scheme:dark}
+*{box-sizing:border-box}
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
+.wrap{max-width:860px;margin:0 auto;padding-block:20px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:18px}
+header{display:flex;flex-direction:column;gap:6px}
+.eyebrow{font-family:var(--display);text-transform:uppercase;letter-spacing:.08em;font-size:13px;color:var(--muted);font-weight:600}
+h1{font-family:var(--display);font-size:34px;line-height:1.05;margin:0;font-weight:700;text-wrap:balance}
+.meta{color:var(--muted);font-size:13.5px}
+.deadline{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-top:6px;padding:10px 14px;border:1px solid var(--line);border-left:4px solid var(--risk);background:var(--surface);border-radius:8px}
+.deadline b{font-family:var(--display);font-size:30px;line-height:1;color:var(--risk);font-variant-numeric:tabular-nums}
+.deadline span{font-size:13.5px;color:var(--muted)}
+.owners{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:560px){.owners{grid-template-columns:1fr}}
+.owner{all:unset;cursor:pointer;display:flex;flex-direction:column;gap:6px;padding:12px 14px;border-radius:10px;background:var(--surface);border:1.5px solid var(--line);min-width:0}
+.owner:focus-visible,.chip:focus-visible,.st:focus-visible,button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.owner[aria-pressed="true"]{border-color:var(--c);background:var(--cs)}
+.owner .on{font-family:var(--display);font-size:19px;font-weight:700;color:var(--c);text-transform:uppercase;letter-spacing:.02em}
+.owner .cnt{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--c)}
+.o-rt{--c:var(--rt);--cs:var(--rt-soft)} .o-mn{--c:var(--mn);--cs:var(--mn-soft)} .o-gs{--c:var(--gs);--cs:var(--gs-soft)}
+.scope{padding:12px 14px;border-radius:8px;background:var(--cs);color:var(--ink);font-size:14px}
+.scope strong{color:var(--c)}
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{all:unset;cursor:pointer;padding:6px 12px;border-radius:999px;border:1px solid var(--line);font-size:13.5px;background:var(--surface)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.spacer{flex:1}
+.btn{font:inherit;font-size:13.5px;font-weight:600;padding:7px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.save{font-size:12.5px;color:var(--muted)}
+section.area{display:flex;flex-direction:column;gap:0;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+section.area h2{margin:0;padding:10px 14px;font-family:var(--display);font-size:17px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px}
+section.area h2 small{font-family:var(--body);font-size:12.5px;letter-spacing:0;text-transform:none;color:var(--muted);font-weight:500;font-variant-numeric:tabular-nums}
+.item{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;padding:12px 14px;border-top:1px solid var(--line)}
+.item:first-of-type{border-top:0}
+.st{all:unset;cursor:pointer;width:26px;height:26px;border-radius:50%;border:2px solid var(--muted);display:grid;place-items:center;margin-top:1px;font-size:14px;font-weight:700}
+.st[data-s="andamento"]{border-color:var(--warn);background:conic-gradient(var(--warn) 0 50%,transparent 50% 100%)}
+.st[data-s="concluido"]{border-color:var(--ok);background:var(--ok);color:var(--surface)}
+.txt{display:flex;flex-direction:column;gap:5px;min-width:0}
+.find{font-weight:600}
+.item.done .find{text-decoration:line-through;color:var(--muted)}
+.act{font-size:14px;color:var(--muted)}
+.tags{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tag{font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:var(--cs);color:var(--c)}
+.tag.risk{--c:var(--risk);--cs:var(--risk-soft)}
+.apoio{font-size:12.5px;color:var(--muted)}
+.stl{font-size:12.5px;color:var(--muted)}
+details summary{cursor:pointer;font-size:13px;color:var(--muted);list-style:none}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:"+ "}
+details[open] summary::before{content:"– "}
+textarea{width:100%;margin-top:6px;font:inherit;font-size:14px;padding:8px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--ink);resize:vertical;min-height:56px}
+.note{font-size:13px;color:var(--muted)}
+.empty{padding:24px;text-align:center;color:var(--muted);background:var(--surface);border-radius:10px;border:1px dashed var(--line)}
+footer{font-size:12.5px;color:var(--muted)}
+.who{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:12px 14px;background:var(--surface);border:1.5px solid var(--line);border-radius:10px}
+.who label{font-weight:700;font-size:14px}
+.who input{flex:1 1 200px;min-width:0;font:inherit;padding:8px 10px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.who.need{border-color:var(--risk);background:var(--risk-soft)}
+.who .hint{flex-basis:100%;font-size:12.5px;color:var(--muted)}
+.by{font-size:12.5px;color:var(--ink);font-weight:600}
+.hist{margin:6px 0 0;padding-left:16px;font-size:12.5px;color:var(--muted);display:flex;flex-direction:column;gap:2px}
+@media (prefers-reduced-motion:no-preference){.bar i{transition:width .3s}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Revisa · Relatório de Inspeção Sanitária</div>
+    <h1>Adequação Sanitária Fortal</h1>
+    <div class="meta">Fortal Comércio de Alimentos LTDA · Rua Comandante Poty, 33, loja A, 18 do Forte · Inspeção em 06/11/2026 · Recebido em 09/11/2026 às 15h</div>
+    <div class="deadline"><b id="days">–</b><span id="daysTxt">dias para o prazo de 09/12/2026</span></div>
+  </header>
+
+  <div class="who" id="whoBox">
+    <label for="who">Quem está registrando?</label>
+    <input id="who" type="text" placeholder="Seu nome (ex.: Thaís – Nutricionista)" autocomplete="name" maxlength="60">
+    <span class="hint" id="whoHint">Seu nome fica gravado em cada item que você marcar, com a data e a hora.</span>
+  </div>
+
+  <div class="owners" id="owners"></div>
+  <div class="scope" id="scope" hidden></div>
+
+  <div class="tools">
+    <button class="chip" id="f-all" aria-pressed="true">Todos</button>
+    <button class="chip" id="f-open" aria-pressed="false">Em aberto</button>
+    <button class="chip" id="f-risk" aria-pressed="false">Risco imediato</button>
+    <button class="chip" id="f-done" aria-pressed="false">Concluídos</button>
+    <span class="spacer"></span>
+    <button class="btn" id="copy">Copiar pendências</button>
+  </div>
+  <div class="save" id="save">Carregando andamento…</div>
+
+  <div id="list"></div>
+
+  <footer>Toque no círculo para mudar o status: pendente → em andamento → concluído. As anotações servem de registro para o ofício de resposta à Revisa. Itens da área de guarda de panelas e do abrigo de resíduos podem estar incompletos se faltou alguma página do relatório.</footer>
+</div>
+
+<script type="module">
+let FS=null;
+import { firebaseConfig } from "./firebase-config.js";
+
+const OWN={
+  rt:{n:"Nutricionista RT",cls:"o-rt",scope:"<strong>Cabe à nutricionista RT:</strong> boas práticas, Manual e POPs, higienização e seu cronograma, armazenamento e rotulagem dos alimentos, conduta e treinamento dos manipuladores, controle de pragas e descarte. Ela executa ou supervisiona e deixa registrado."},
+  mn:{n:"Manutenção / Obra",cls:"o-mn",scope:"<strong>Cabe à manutenção:</strong> estrutura física e instalações — ralos, portas, telas, elétrica, iluminação, ventilação, piso, paredes, teto e equipamentos. A RT só confere se ficou adequado."},
+  gs:{n:"Gestão / Administrativo",cls:"o-gs",scope:"<strong>Cabe à gestão:</strong> alvará, documentação dos veículos, contratos com terceiros e compras (utensílios, lixeiras, armários, dispensers)."}
+};
+// [id, área, constatação, ação, responsável, apoio, risco imediato]
+const ITEMS=[
+["en1","Entrada","Diversas partes do piso danificadas","Recuperar o piso com material liso, lavável e impermeável.","mn"],
+["en2","Entrada","Grelhas com acúmulo de água e sujidades","Incluir as grelhas no cronograma de higienização e conferir a execução.","rt"],
+["en3","Entrada","Tubulação seca da Energisa sem tampa","Instalar tampa na tubulação.","mn"],
+["en4","Entrada","Presença de motocicleta no local","Definir outro local para a moto e comunicar à equipe.","gs"],
+["en5","Entrada","Batente da porta necessitando acabamento","Fazer o acabamento do batente.","mn"],
+["en6","Entrada","Presença de fiação exposta","Embutir a fiação ou passar em canaleta.","mn","",1],
+["en7","Entrada","Bebedouro sem etiqueta com data da troca do filtro","Etiquetar com a data da última troca e controlar a próxima em planilha.","rt","Gestão compra o filtro"],
+["es1","Estoque","Ausência de porta","Instalar porta.","mn"],
+["es2","Estoque","Presença de caixas de papelão","Retirar o papelão e passar os insumos para caixas plásticas; incluir no POP de recebimento.","rt"],
+["es3","Estoque","Insumos encostados nas paredes","Reorganizar com afastamento de parede e piso (estrados ou prateleiras).","rt","Gestão compra estrados se faltar"],
+["es4","Estoque","Iluminação artificial insuficiente","Reforçar a iluminação com luminárias protegidas.","mn"],
+["es5","Estoque","Aberturas da parede sem tela milimétrica","Instalar tela milimétrica removível.","mn"],
+["es6","Estoque","Ventilação insuficiente","Melhorar a ventilação (exaustor ou abertura com tela).","mn"],
+["fz1","Área dos freezers","Ausência de porta","Instalar porta.","mn"],
+["fz2","Área dos freezers","Material de limpeza (vassoura, rodo) no local","Definir local exclusivo para material de limpeza e orientar a equipe.","rt"],
+["fz3","Área dos freezers","Ralos sem tampa escamoteável","Trocar por ralo com tampa escamoteável (abre e fecha).","mn"],
+["fz4","Área dos freezers","Tela da janela mal ajustada e danificada","Substituir e ajustar a tela milimétrica.","mn"],
+["fz5","Área dos freezers","Área com odor fétido","Higienização profunda, achar a origem do odor e registrar.","rt","",1],
+["fz6","Área dos freezers","Sacolas de cor e alimentos sem etiqueta de identificação, fabricação e validade","Retirar sacolas coloridas e etiquetar tudo (produto, fabricação, validade).","rt","",1],
+["fz7","Área dos freezers","Produtos abertos sem data de abertura","Etiquetar com data de abertura e nova validade.","rt","",1],
+["fz8","Área dos freezers","Alimentos para descarte sem identificação dentro do freezer","Descartar com registro ou separar com etiqueta \"DESCARTE\" fora do freezer.","rt","",1],
+["fz9","Área dos freezers","Câmara fria sem paletes; caixas com carnes no piso","Tirar as caixas do piso hoje; usar paletes ou estrados plásticos.","rt","Gestão compra os paletes",1],
+["fz10","Área dos freezers","Presença de vetores (moscas)","Revisar o controle integrado de pragas e pedir visita da dedetizadora.","rt","Gestão aciona a dedetizadora",1],
+["cz1","Cozinha","Faltam duas portas (recebimento e lavagem); porta lateral com fechadura danificada","Instalar as portas e consertar a fechadura.","mn"],
+["cz2","Cozinha","Porta lateral mantida aberta; portas com sujidades (inclusive a de enrolar)","Orientar a equipe a manter a porta fechada e incluir portas na higienização.","rt"],
+["cz3","Cozinha","Telas milimétricas de janelas e aberturas com sujidades","Incluir as telas no cronograma de higienização.","rt"],
+["cz4","Cozinha","Saída dos exaustores sem tela milimétrica","Instalar tela na saída dos exaustores.","mn"],
+["cz5","Cozinha","Luminárias não estão presas ao teto","Fixar as luminárias, com proteção contra quebra.","mn","",1],
+["cz6","Cozinha","Tomadas elétricas sem tampa","Colocar espelhos nas tomadas.","mn","",1],
+["cz7","Cozinha","Grelhas incompletas","Completar as grelhas.","mn"],
+["cz8","Cozinha","Paredes e coifa com acúmulo de sujidades","Limpeza pesada e inclusão no cronograma de higienização.","rt"],
+["cz9","Cozinha","Abertura atrás dos fornos sem tela milimétrica","Instalar tela milimétrica.","mn"],
+["cz10","Cozinha","Revestimento de pilastra danificado (parte inferior)","Refazer o revestimento.","mn"],
+["cz11","Cozinha","Teto com infiltração e descascamento","Resolver a infiltração e repintar.","mn"],
+["cz12","Cozinha","Pés das bancadas e suporte de panelas com ferrugem","Tratar e pintar ou trocar por inox.","mn"],
+["cz13","Cozinha","Suporte de sabonete líquido do lavatório danificado","Trocar o dispenser.","gs"],
+["cz14","Cozinha","Utensílios em péssimo estado (colheres)","Descartar os danificados e repor.","gs","RT lista o que descartar"],
+["cz15","Cozinha","Funcionário fazendo uso de barba","Orientar, colher assinatura de ciência e reforçar no treinamento.","rt","",1],
+["cz16","Cozinha","Forno drenando líquido do cozimento direto no piso","Ajustar o dreno ou instalar coletor.","mn","",1],
+["cm1","Área de cocção menor","Fiação exposta","Embutir a fiação ou passar em canaleta.","mn","",1],
+["cm2","Área de cocção menor","Saída do exaustor sem tela milimétrica","Instalar tela.","mn"],
+["cm3","Área de cocção menor","Ralo sem tampa escamoteável","Trocar por ralo escamoteável.","mn"],
+["cm4","Área de cocção menor","Iluminação insuficiente","Reforçar a iluminação.","mn"],
+["cm5","Área de cocção menor","Parede próxima à entrada danificada","Recuperar a parede.","mn"],
+["cm6","Área de cocção menor","Pés das bancadas com ferrugem","Tratar e pintar ou trocar.","mn"],
+["cm7","Área de cocção menor","Passthrough usado como armário e com sujidades","Esvaziar, higienizar e voltar ao uso correto.","rt"],
+["lv1","Área de lavagem","Ralo sem tampa escamoteável e acabamento ao redor danificado","Trocar o ralo e refazer o acabamento.","mn"],
+["lv2","Área de lavagem","Pias sem tubulação sifonada ligada ao deságue","Instalar sifão nas pias.","mn"],
+["lv3","Área de lavagem","Acúmulo de restos de alimentos no piso","Rotina de recolhimento durante o turno e conferência no fim do dia.","rt","",1],
+["gp1","Área de guarda de panelas","Ausência de porta (comunicação direta com a área de lavagem)","Instalar porta.","mn"],
+["gp2","Área de guarda de panelas","Ralo sem tampa escamoteável","Trocar por ralo escamoteável.","mn"],
+["gp3","Área de guarda de panelas","Panelas em péssimo estado de conservação","Descartar e repor as panelas.","gs","RT lista o que descartar"],
+["sf1","Sanitário feminino","Ralo sem tampa escamoteável","Trocar por ralo escamoteável.","mn"],
+["sf2","Sanitário feminino","Lixeira com pedal danificado","Trocar a lixeira.","gs"],
+["sf3","Sanitário feminino","Local necessitando higienização","Higienizar e incluir no cronograma com checklist.","rt"],
+["sm1","Sanitário masculino","Ralo sem tampa escamoteável","Trocar por ralo escamoteável.","mn"],
+["sm2","Sanitário masculino","Sem lixeira com tampa e pedal","Comprar lixeira com tampa e pedal.","gs"],
+["sm3","Sanitário masculino","Objetos pessoais (roupas) no sanitário","Orientar a equipe a guardar nos armários.","rt"],
+["co1","Corredor","Ralos sem tampa escamoteável","Trocar por ralos escamoteáveis.","mn"],
+["co2","Corredor","Lixeira danificada","Trocar a lixeira.","gs"],
+["co3","Corredor","Armários insuficientes para objetos pessoais","Comprar armários para todos os funcionários.","gs"],
+["co4","Corredor","Botas armazenadas em balde plástico","Definir guarda adequada das botas e orientar.","rt","Gestão compra sapateira"],
+["co5","Corredor","Prateleiras com ferrugem usadas para objetos pessoais","Retirar e substituir pelos armários.","gs"],
+["co6","Corredor","Caixa de energia sem tampa e com fiação exposta (junto ao lavatório)","Fechar a caixa e proteger a fiação.","mn","",1],
+["co7","Corredor","Parede junto à produção só no reboco","Pintar ou revestir.","mn"],
+["ar1","Abrigo de resíduos","Área desorganizada e em péssimo estado de higienização (inclusive coletores)","Organizar, higienizar coletores e definir frequência no POP de resíduos.","rt","",1],
+["ar2","Abrigo de resíduos","Caixa de energia sem tampa","Instalar tampa.","mn","",1],
+["dc1","Documentação","Manual de Boas Práticas desatualizado","Atualizar o MBP e os POPs e assinar como RT.","rt"],
+["dc2","Documentação","Sem certificados de treinamento em manipulação de todos os funcionários","Ministrar ou organizar o curso e emitir certificados para todos.","rt","Gestão envia a lista de funcionários"],
+["dc3","Documentação","Sem certificados de dedetização e documentos dos 2 veículos de transporte","Contratar dedetização dos veículos e reunir CRLV e documentação de transporte.","gs"],
+["dc4","Documentação","Alvará Sanitário vencido","Protocolar a renovação do alvará.","gs","RT assina a responsabilidade técnica"]
+];
+const AREAS=[...new Set(ITEMS.map(i=>i[1]))];
+const STL={pendente:"Pendente",andamento:"Em andamento",concluido:"Concluído"};
+const NEXT={pendente:"andamento",andamento:"concluido",concluido:"pendente"};
+let state={}, owner="rt", filt="all", db=null, canWrite=true, local=false;
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const st=id=>(state[id]&&state[id].s)||"pendente";
+const fmt=iso=>{try{return new Date(iso).toLocaleDateString("pt-BR")}catch(e){return""}};
+const fmtFull=iso=>{try{return new Date(iso).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"})}catch(e){return""}};
+const who=()=>($("#who").value||"").trim();
+try{$("#who").value=localStorage.getItem("fortal-revisa-nome")||""}catch(e){}
+$("#who").addEventListener("input",()=>{
+  try{localStorage.setItem("fortal-revisa-nome",who())}catch(e){}
+  if(who()){$("#whoBox").classList.remove("need");$("#whoHint").textContent="Seu nome fica gravado em cada item que você marcar, com a data e a hora."}
+});
+
+(function days(){
+  const d=new Date(); d.setHours(0,0,0,0);
+  const n=Math.round((new Date(2026,11,9)-d)/86400000);
+  $("#days").textContent=n<0?"Vencido":n;
+  $("#daysTxt").textContent=n<0?"O prazo de 09/12/2026 passou":(n===1?"dia":"dias")+" para o prazo de 09/12/2026";
+})();
+
+function renderOwners(){
+  const el=$("#owners"); el.innerHTML="";
+  Object.entries(OWN).forEach(([k,o])=>{
+    const its=ITEMS.filter(i=>i[4]===k), done=its.filter(i=>st(i[0])==="concluido").length;
+    const b=document.createElement("button");
+    b.className="owner "+o.cls; b.id="own-"+k; b.setAttribute("aria-pressed",owner===k);
+    b.innerHTML=`<span class="on">${o.n}</span><span class="cnt">${done} de ${its.length} concluídos</span><span class="bar"><i style="width:${its.length?done/its.length*100:0}%"></i></span>`;
+    b.onclick=()=>{owner=owner===k?"":k;render()};
+    el.appendChild(b);
+  });
+  const sc=$("#scope");
+  if(owner){sc.hidden=false;sc.className="scope "+OWN[owner].cls;sc.innerHTML=OWN[owner].scope+" Toque de novo no painel para ver todos."}
+  else sc.hidden=true;
+}
+function visible(){
+  return ITEMS.filter(i=>{
+    if(owner&&i[4]!==owner)return false;
+    const s=st(i[0]);
+    if(filt==="open")return s!=="concluido";
+    if(filt==="done")return s==="concluido";
+    if(filt==="risk")return i[6]&&s!=="concluido";
+    return true;
+  });
+}
+function renderList(){
+  const its=visible(), el=$("#list"); el.innerHTML="";
+  if(!its.length){el.innerHTML='<div class="empty">Nenhum item neste filtro.</div>';return}
+  AREAS.forEach(a=>{
+    const g=its.filter(i=>i[1]===a); if(!g.length)return;
+    const all=ITEMS.filter(i=>i[1]===a), dn=all.filter(i=>st(i[0])==="concluido").length;
+    const sec=document.createElement("section"); sec.className="area";
+    sec.innerHTML=`<h2>${esc(a)}<small>${dn}/${all.length}</small></h2>`;
+    g.forEach(i=>{
+      const [id,,find,act,ow,apoio,risk]=i, s=st(id), r=state[id]||{};
+      const row=document.createElement("div"); row.className="item"+(s==="concluido"?" done":"");
+      row.innerHTML=`<button class="st" data-s="${s}" aria-label="Status: ${STL[s]}. Tocar para mudar">${s==="concluido"?"✓":""}</button>
+      <div class="txt"><div class="find">${esc(find)}</div><div class="act">${esc(act)}</div>
+      <div class="tags">${owner?"":`<span class="tag ${OWN[ow].cls}">${OWN[ow].n}</span>`}${risk?'<span class="tag risk">Risco imediato</span>':""}<span class="stl">${STL[s]}</span>${r.por&&r.at?`<span class="by">· ${esc(r.por)} em ${fmt(r.at)}</span>`:""}</div>
+      ${apoio?`<div class="apoio">Apoio: ${esc(apoio)}</div>`:""}
+      <details${r.obs?" open":""}><summary>${r.obs?"Anotação":"Anotar"}${(r.hist||[]).length?" e histórico":""}</summary><textarea id="obs-${id}" placeholder="Ex.: comprado em 12/11, foto do antes e depois na pasta" ${canWrite?"":"disabled"}>${esc(r.obs||"")}</textarea>${(r.hist||[]).length?`<ol class="hist">${r.hist.slice().reverse().map(h=>`<li>${fmtFull(h.at)} · ${esc(h.por)} · ${esc(h.o)}</li>`).join("")}</ol>`:""}</details></div>`;
+      const btn=row.querySelector(".st");
+      btn.disabled=!canWrite;
+      btn.onclick=()=>{if(!needName())return;save(id,{s:NEXT[s],obs:r.obs||""},"Marcou "+STL[NEXT[s]].toLowerCase())};
+      row.querySelector("textarea").onchange=e=>{if(!needName()){e.target.value=r.obs||"";return}save(id,{s,obs:e.target.value.trim()},"Anotou")};
+      sec.appendChild(row);
+    });
+    el.appendChild(sec);
+  });
+}
+function render(){renderOwners();renderList()}
+
+function needName(){
+  if(who())return true;
+  $("#whoBox").classList.add("need");
+  $("#whoHint").textContent="Escreva seu nome antes de marcar ou anotar um item.";
+  $("#who").focus();
+  return false;
+}
+async function save(id,v,o){
+  const now=new Date().toISOString(), prev=state[id]||{};
+  const hist=[...(prev.hist||[]),{o,por:who(),at:now}].slice(-30);
+  const rec={s:v.s,obs:v.obs,at:now,por:who(),hist};
+  state={...state,[id]:rec};
+  render();
+  if(local){try{localStorage.setItem("fortal-revisa",JSON.stringify(state))}catch(e){}return}
+  $("#save").textContent="Salvando…";
+  try{await FS.setDoc(FS.doc(db,"itens",id),rec);$("#save").textContent="Salvo. Todos que abrirem o app já veem."}
+  catch(e){
+    if(e&&e.code==="invalid_argument"){canWrite=false;render();$("#save").textContent="Você só pode visualizar este plano."}
+    else $("#save").textContent="Não foi possível salvar agora. Tente de novo em instantes.";
+  }
+}
+
+$("#copy").onclick=async()=>{
+  const its=ITEMS.filter(i=>(!owner||i[4]===owner)&&st(i[0])!=="concluido");
+  let t=`*Adequação Revisa — Fortal* (prazo 09/12/2026)\n*${owner?OWN[owner].n:"Todos"}* — ${its.length} pendências\n`;
+  AREAS.forEach(a=>{const g=its.filter(i=>i[1]===a);if(!g.length)return;t+=`\n*${a}*\n`;g.forEach(i=>{const r=state[i[0]]||{};t+=`• ${i[2]} — ${i[3]}${st(i[0])==="andamento"?` (em andamento${r.por?", "+r.por+" em "+fmt(r.at):""})`:""}\n`})});
+  try{await navigator.clipboard.writeText(t);$("#copy").textContent="Copiado"}
+  catch(e){$("#copy").textContent="Não foi possível copiar"}
+  setTimeout(()=>$("#copy").textContent="Copiar pendências",1800);
+};
+["all","open","risk","done"].forEach(f=>$("#f-"+f).onclick=()=>{filt=f;document.querySelectorAll(".tools .chip").forEach(c=>c.setAttribute("aria-pressed",c.id==="f-"+f));renderList()});
+
+render();
+
+(async function(){
+  const offline=msg=>{
+    local=true;
+    try{state=JSON.parse(localStorage.getItem("fortal-revisa")||"{}")}catch(e){state={}}
+    $("#save").textContent=msg;
+    render();
+  };
+  if(!firebaseConfig||!firebaseConfig.projectId||firebaseConfig.projectId.startsWith("COLE")){
+    local=true;
+    try{state=JSON.parse(localStorage.getItem("fortal-revisa")||"{}")}catch(e){state={}}
+    $("#save").textContent="Firebase ainda não configurado: o andamento fica salvo só neste aparelho.";
+    render();return;
+  }
+  try{
+    const app=await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
+    FS=await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+    db=FS.getFirestore(app.initializeApp(firebaseConfig));
+  }catch(e){offline("Sem conexão com o servidor: o que você marcar agora fica só neste aparelho.");return}
+  const timer=setTimeout(()=>{$("#save").textContent="Ainda carregando o andamento salvo. Verifique a internet."},10000);
+  FS.onSnapshot(FS.collection(db,"itens"),snap=>{
+    const s={}; snap.forEach(d=>{s[d.id]=d.data()});
+    state=s;
+    clearTimeout(timer);
+    if(/Carregando|Ainda/.test($("#save").textContent))$("#save").textContent="Andamento compartilhado: o que você marcar aparece para todos.";
+    const a=document.activeElement; if(a&&(a.tagName==="TEXTAREA"))return;
+    render();
+  },err=>{clearTimeout(timer);$("#save").textContent="Não foi possível carregar o andamento. Verifique a internet ou as regras do Firebase."});
+})();
+</script>
+</body>
+</html>
